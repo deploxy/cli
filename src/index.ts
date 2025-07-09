@@ -9,7 +9,7 @@ import {
   parseDeployConfigs,
   parsePackageJson,
 } from './lib/metadata.js';
-import { UPLOAD_API_URL } from './lib/constant.js';
+import { CONFIG_FILE_NAME, UPLOAD_API_URL } from './lib/constant.js';
 import { uploadFile } from './lib/upload.js';
 import { getNpmToken, readNpmrc, validatePackage } from './lib/npm.js';
 
@@ -34,10 +34,10 @@ async function runInit(targetPath: string | undefined) {
   console.log('🚀 Initializing...');
   console.log(`📂 Target directory: ${resolvedPath}`);
 
-  const deployConfigPath = path.join(resolvedPath, '.deploy-configs.json');
+  const deployConfigPath = path.join(resolvedPath, CONFIG_FILE_NAME);
 
   if (fs.existsSync(deployConfigPath)) {
-    console.log('✅ .deploy-configs.json already exists.');
+    console.log(`✅ ${CONFIG_FILE_NAME} already exists.`);
     return;
   }
 
@@ -48,7 +48,7 @@ async function runInit(targetPath: string | undefined) {
   };
 
   fs.writeFileSync(deployConfigPath, JSON.stringify(defaultConfig, null, 2));
-  console.log('✅ Created .deploy-configs.json file.');
+  console.log(`✅ Created ${CONFIG_FILE_NAME} file.`);
   console.log('');
   console.log(
     '******************************************************************',
@@ -75,8 +75,8 @@ async function runDeploy(targetPath: string | undefined) {
   console.log('🚀 Starting deployment...');
   console.log('📂 Working directory:', currentDir);
 
-  // 1. Read AUTH_TOKEN from .deploy-configs.json file
-  const deployConfigsPath = path.join(currentDir, '.deploy-configs.json');
+  // 1. Read AUTH_TOKEN from .deploxy.json file
+  const deployConfigsPath = path.join(currentDir, CONFIG_FILE_NAME);
   if (!fs.existsSync(deployConfigsPath)) {
     console.log('');
     console.log(
@@ -106,11 +106,11 @@ async function runDeploy(targetPath: string | undefined) {
     !deployConfigs.deployRegion ||
     !deployConfigs.mcpPath
   ) {
-    console.error('❌ .deploy-configs.json file is missing required fields.');
+    console.error(`❌ ${CONFIG_FILE_NAME} file is missing required fields.`);
     process.exit(1);
   }
 
-  console.log('✅ .deploy-configs.json file parsed successfully');
+  console.log(`✅ ${CONFIG_FILE_NAME} file parsed successfully`);
 
   // 2. Find package.json
   const packageJsonPath = path.join(currentDir, 'package.json');
@@ -235,7 +235,7 @@ async function main() {
 
   program
     .command('init')
-    .description('Initialize a new project with a .deploy-configs.json file')
+    .description(`Initialize a new project with a ${CONFIG_FILE_NAME} file`)
     .argument('[path]', 'The path to initialize the project in', '.')
     .action(runInit);
 
