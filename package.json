@@ -1,0 +1,31 @@
+{
+  "name": "@deploxy/cli",
+  "version": "0.0.2",
+  "description": "Tool for make MCP proxy package",
+  "bin": {
+    "deploxy-cli": "dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "deploy": "pnpm publish --access public --no-git-checks"
+  },
+  "keywords": [],
+  "author": "KGESH",
+  "dependencies": {
+    "adm-zip": "^0.5.16",
+    "commander": "^14.0.0",
+    "get-tsconfig": "^4.10.1",
+    "minimatch": "^10.0.3"
+  },
+  "devDependencies": {
+    "@types/adm-zip": "^0.5.7",
+    "@types/minimatch": "^5.1.2",
+    "@types/node": "^22.13.10",
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.3"
+  }
+}
