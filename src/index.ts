@@ -103,7 +103,7 @@ async function runDeploy(targetPath: string | undefined) {
   const deployConfigs = parseDeployConfigs(deployConfigsPath);
   if (
     !deployConfigs?.authToken ||
-    !deployConfigs.deployRegion ||
+    !deployConfigs.defaultDeployRegion ||
     !deployConfigs.mcpPath
   ) {
     console.error(`❌ ${CONFIG_FILE_NAME} file is missing required fields.`);

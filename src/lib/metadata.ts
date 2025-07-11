@@ -5,9 +5,9 @@ import { parseTsconfig as parseTs } from 'get-tsconfig';
 
 export interface DeployConfigs {
   authToken: string;
-  deployRegion: string;
+  defaultDeployRegion: string;
   stdioArgsIndex: string | undefined;
-  headers: Record<string, string | number | boolean> | undefined;
+  injectedEnv: Record<string, any> | undefined;
   mcpPath: string;
   packageType: 'js' | 'python';
 }

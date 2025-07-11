@@ -1,6 +1,6 @@
 {
   "name": "@deploxy/cli",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Tool for make MCP proxy package",
   "homepage": "https://deploxy.com",
   "repository": {

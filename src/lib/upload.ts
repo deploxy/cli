@@ -26,12 +26,12 @@ export async function uploadFile({
     form.append('packageName', packageName);
     form.append('packageVersion', packageVersion);
     form.append('npmrcContent', npmrcContent);
-    form.append('deployRegion', deployConfigs.deployRegion);
+    form.append('defaultDeployRegion', deployConfigs.defaultDeployRegion);
     form.append('mcpPath', deployConfigs.mcpPath);
     form.append('packageType', deployConfigs.packageType);
 
-    if (deployConfigs.headers) {
-      form.append('headers', JSON.stringify(deployConfigs.headers));
+    if (deployConfigs.injectedEnv) {
+      form.append('injectedEnv', JSON.stringify(deployConfigs.injectedEnv));
     }
     if (deployConfigs.stdioArgsIndex) {
       form.append('stdioArgsIndex', deployConfigs.stdioArgsIndex);
