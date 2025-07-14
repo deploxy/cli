@@ -16,12 +16,11 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
-    "deploy": "pnpm publish --access public --no-git-checks"
+    "deploy": "npm publish --access public --no-git-checks"
   },
   "dependencies": {
     "adm-zip": "^0.5.16",
     "commander": "^14.0.0",
-    "get-tsconfig": "^4.10.1",
     "minimatch": "^10.0.3"
   },
   "devDependencies": {

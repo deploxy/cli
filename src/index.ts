@@ -42,9 +42,12 @@ async function runInit(targetPath: string | undefined) {
   }
 
   const defaultConfig = {
-    authToken: 'YOUR_AUTH_TOKEN',
-    deployRegion: 'YOUR_DEPLOY_REGION',
-    mcpPath: 'YOUR_MCP_PATH',
+    authToken: 'YOUR_DEPLOXY_TOKEN',
+    defaultDeployRegion: 'us-east-1',
+    stdioArgsIndex: '--args',
+    mcpPath: '/mcp',
+    packageType: 'js',
+    injectedEnv: {},
   };
 
   fs.writeFileSync(deployConfigPath, JSON.stringify(defaultConfig, null, 2));
@@ -186,7 +189,7 @@ async function runDeploy(targetPath: string | undefined) {
   );
 
   // 3. Check list of files to compress
-  const filesToInclude = getFilesToInclude(currentDir);
+  const filesToInclude = getFilesToInclude(packageInfo);
   console.log('📋 Files to compress:');
   filesToInclude.forEach((file) => console.log(`  - ${file}`));
 
