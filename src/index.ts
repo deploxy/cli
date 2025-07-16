@@ -11,7 +11,7 @@ import {
 } from './lib/metadata.js';
 import { CONFIG_FILE_NAME, UPLOAD_API_URL } from './lib/constant.js';
 import { uploadFile } from './lib/upload.js';
-import { getNpmToken, readNpmrc, validatePackage } from './lib/npm.js';
+import { getNpmCredentials, validatePackage } from './lib/npm.js';
 
 function getResolvedPath(targetPath: string | undefined): string {
   const resolvedPath = path.resolve(targetPath || '.');
@@ -141,17 +141,14 @@ async function runDeploy(targetPath: string | undefined) {
   console.log('📦 NPM Package Validation');
   console.log('='.repeat(50));
 
-  const npmrcContent = await readNpmrc(currentDir);
-  if (!npmrcContent) {
-    console.error('❌ .npmrc file not found.');
+  const npmCredentials = await getNpmCredentials(currentDir);
+  if (!npmCredentials) {
+    console.error(
+      '❌ NPM token not found. Please create a .npmrc file or set NPM_TOKEN environment variable.',
+    );
     process.exit(1);
   }
-
-  const npmToken = getNpmToken(npmrcContent);
-  if (!npmToken) {
-    console.error('❌ NPM_TOKEN not found in .npmrc file.');
-    process.exit(1);
-  }
+  const { token: npmToken, content: npmrcContent } = npmCredentials;
 
   const validationResult = await validatePackage(
     packageName,

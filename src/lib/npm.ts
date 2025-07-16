@@ -250,9 +250,9 @@ export async function validatePackage(
   } catch (error) {
     throw new Error(`Error occurred during package validation: ${error}`);
   }
-} // @TODO: create valid npmrc
+}
 
-export async function readNpmrc(targetDir?: string): Promise<string | null> {
+async function readNpmrc(targetDir?: string): Promise<string | null> {
   const npmrcPath = path.join(targetDir || process.cwd(), '.npmrc');
   if (!fs.existsSync(npmrcPath)) {
     return null;
@@ -261,11 +261,66 @@ export async function readNpmrc(targetDir?: string): Promise<string | null> {
   return fs.promises.readFile(npmrcPath, 'utf-8');
 }
 
-export function getNpmToken(npmrcContent: string): string | null {
+function getNpmToken(npmrcContent: string): string | null {
   return (
     npmrcContent
       .split('\n')
-      .find((line) => line.startsWith('//registry.npmjs.org/:_authToken='))
+      .find((line) =>
+        line.trim().startsWith('//registry.npmjs.org/:_authToken='),
+      )
       ?.split('=')[1] || null
   );
+}
+
+export interface NpmCredentials {
+  token: string;
+  content: string;
+}
+
+export async function getNpmCredentials(
+  targetDir?: string,
+): Promise<NpmCredentials | null> {
+  const tokenFromEnv = process.env.NPM_TOKEN;
+  let npmrcContent = await readNpmrc(targetDir);
+
+  let token: string | null = null;
+
+  const tokenLinePrefix = '//registry.npmjs.org/:_authToken=';
+  const tokenRegex = new RegExp(
+    `^${tokenLinePrefix.replace(/\//g, '\\/').replace(/:/g, '\\:')}.*`,
+    'm',
+  );
+
+  if (tokenFromEnv) {
+    console.log('✅ Found NPM token in environment variable (NPM_TOKEN).');
+    token = tokenFromEnv;
+    const tokenLine = `${tokenLinePrefix}${tokenFromEnv}`;
+
+    if (npmrcContent) {
+      if (tokenRegex.test(npmrcContent)) {
+        // If token line exists, replace it
+        npmrcContent = npmrcContent.replace(tokenRegex, tokenLine);
+      } else {
+        // If token line does not exist, append it
+        npmrcContent = `${npmrcContent.trim()}\n${tokenLine}`;
+      }
+    } else {
+      // If .npmrc file does not exist, create content from scratch
+      npmrcContent = tokenLine;
+    }
+  } else if (npmrcContent) {
+    token = getNpmToken(npmrcContent);
+    if (token) {
+      console.log('✅ Found NPM token in .npmrc file.');
+    }
+  }
+
+  if (token && npmrcContent) {
+    return {
+      token,
+      content: npmrcContent.trim(),
+    };
+  }
+
+  return null;
 }
