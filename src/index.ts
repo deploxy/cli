@@ -52,6 +52,24 @@ async function runInit(targetPath: string | undefined) {
 
   fs.writeFileSync(deployConfigPath, JSON.stringify(defaultConfig, null, 2));
   console.log(`✅ Created ${CONFIG_FILE_NAME} file.`);
+
+  // Add .deploxy.json to .gitignore
+  const gitignorePath = path.join(resolvedPath, '.gitignore');
+  const gitignoreEntry = `\n# Deploxy configuration file\n${CONFIG_FILE_NAME}\n`;
+
+  if (fs.existsSync(gitignorePath)) {
+    const content = fs.readFileSync(gitignorePath, 'utf-8');
+    if (!content.includes(CONFIG_FILE_NAME)) {
+      fs.appendFileSync(gitignorePath, gitignoreEntry);
+      console.log(`✅ Added ${CONFIG_FILE_NAME} to .gitignore.`);
+    } else {
+      console.log(`✅ ${CONFIG_FILE_NAME} already exists in .gitignore.`);
+    }
+  } else {
+    fs.writeFileSync(gitignorePath, gitignoreEntry.trimStart());
+    console.log(`✅ Created .gitignore and added ${CONFIG_FILE_NAME}.`);
+  }
+
   console.log('');
   console.log(
     '******************************************************************',
