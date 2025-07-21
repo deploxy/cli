@@ -1,12 +1,42 @@
 import * as fs from 'fs';
+import { MEMORY_SIZES_MB, NODEJS_RUNTIMES } from './constant.js';
+
+export type NodejsRuntime = (typeof NODEJS_RUNTIMES)[number]['value'];
+
+export type MemorySizeMB = (typeof MEMORY_SIZES_MB)[number]['value'];
 
 export interface DeployConfigs {
   authToken: string;
   defaultDeployRegion: string;
   stdioArgsIndex: string | undefined;
   injectedEnv: Record<string, any> | undefined;
-  mcpPath: string;
   packageType: 'js' | 'python';
+  nodejsRuntime: NodejsRuntime;
+  memorySizeMB: MemorySizeMB;
+}
+
+/**
+ * Substitutes environment variable placeholders in a string.
+ * e.g., "${process.env.MY_VAR}" will be replaced by the value of MY_VAR.
+ * @param content The string content to process.
+ * @returns The string with environment variables substituted.
+ */
+function substituteEnvVars(content: string): string {
+  // This regex finds placeholders like ${process.env.VAR_NAME}
+  const regex = /\$\{\s*process\.env\.([a-zA-Z_][a-zA-Z0-9_]*)\s*\}/g;
+
+  return content.replace(regex, (match, varName) => {
+    const envVar = process.env[varName];
+
+    if (envVar === undefined) {
+      console.warn(`⚠️  Environment variable "${varName}" is not set.`);
+      return ''; // Replace with empty string if not found
+    }
+
+    // JSON.stringify escapes the string and wraps it in quotes.
+    // We remove the outer quotes because the placeholder is already inside quotes in the JSON file.
+    return JSON.stringify(envVar).slice(1, -1);
+  });
 }
 
 export function parseDeployConfigs(
@@ -14,8 +44,14 @@ export function parseDeployConfigs(
 ): DeployConfigs | null {
   try {
     const content = fs.readFileSync(deployConfigsPath, 'utf-8');
-    return JSON.parse(content);
-  } catch {
+    const substitutedContent = substituteEnvVars(content);
+    return JSON.parse(substitutedContent);
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      console.error(
+        '❌ Error parsing .deploxy.json. This might be due to a syntax error in the file or an issue with environment variable substitution.',
+      );
+    }
     return null;
   }
 }

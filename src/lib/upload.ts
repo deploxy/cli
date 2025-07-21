@@ -27,8 +27,9 @@ export async function uploadFile({
     form.append('packageVersion', packageVersion);
     form.append('npmrcContent', npmrcContent);
     form.append('defaultDeployRegion', deployConfigs.defaultDeployRegion);
-    form.append('mcpPath', deployConfigs.mcpPath);
     form.append('packageType', deployConfigs.packageType);
+    form.append('nodejsRuntime', deployConfigs.nodejsRuntime);
+    form.append('memorySizeMB', deployConfigs.memorySizeMB.toString());
 
     if (deployConfigs.injectedEnv) {
       form.append('injectedEnv', JSON.stringify(deployConfigs.injectedEnv));
@@ -56,7 +57,7 @@ export async function uploadFile({
     console.log('✅ File upload successful!');
     console.log('Response:', responseData);
   } catch (error) {
-    console.error('❌ Error occurred during upload:', error);
+    console.error('❌ Upload failed:', error);
     throw error;
   }
 }

@@ -9,7 +9,12 @@ import {
   parseDeployConfigs,
   parsePackageJson,
 } from './lib/metadata.js';
-import { CONFIG_FILE_NAME, UPLOAD_API_URL } from './lib/constant.js';
+import {
+  CONFIG_FILE_NAME,
+  MEMORY_SIZES_MB,
+  NODEJS_RUNTIMES,
+  UPLOAD_API_URL,
+} from './lib/constant.js';
 import { uploadFile } from './lib/upload.js';
 import { getNpmCredentials, validatePackage } from './lib/npm.js';
 
@@ -45,9 +50,10 @@ async function runInit(targetPath: string | undefined) {
     authToken: 'YOUR_DEPLOXY_TOKEN',
     defaultDeployRegion: 'us-east-1',
     stdioArgsIndex: '--args',
-    mcpPath: '/mcp',
     packageType: 'js',
     injectedEnv: {},
+    nodejsRuntime: NODEJS_RUNTIMES[0].value,
+    memorySizeMB: MEMORY_SIZES_MB[0].value,
   };
 
   fs.writeFileSync(deployConfigPath, JSON.stringify(defaultConfig, null, 2));
@@ -122,13 +128,33 @@ async function runDeploy(targetPath: string | undefined) {
   }
 
   const deployConfigs = parseDeployConfigs(deployConfigsPath);
-  if (
-    !deployConfigs?.authToken ||
-    !deployConfigs.defaultDeployRegion ||
-    !deployConfigs.mcpPath
-  ) {
+  if (!deployConfigs?.authToken || !deployConfigs.defaultDeployRegion) {
     console.error(`❌ ${CONFIG_FILE_NAME} file is missing required fields.`);
     process.exit(1);
+  }
+
+  if (deployConfigs.memorySizeMB) {
+    if (
+      !MEMORY_SIZES_MB.some((mem) => mem.value === deployConfigs.memorySizeMB)
+    ) {
+      console.error(
+        `❌ Invalid memory size: ${deployConfigs.memorySizeMB}. Please use one of the following: ${MEMORY_SIZES_MB.map((mem) => mem.value).join(', ')}`,
+      );
+      process.exit(1);
+    }
+  }
+
+  if (deployConfigs.nodejsRuntime) {
+    if (
+      !NODEJS_RUNTIMES.some(
+        (runtime) => runtime.value === deployConfigs.nodejsRuntime,
+      )
+    ) {
+      console.error(
+        `❌ Invalid Node.js runtime: ${deployConfigs.nodejsRuntime}. Please use one of the following: ${NODEJS_RUNTIMES.map((runtime) => runtime.value).join(', ')}`,
+      );
+      process.exit(1);
+    }
   }
 
   console.log(`✅ ${CONFIG_FILE_NAME} file parsed successfully`);
