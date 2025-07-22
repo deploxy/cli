@@ -28,14 +28,18 @@ export async function uploadFile({
     form.append('npmrcContent', npmrcContent);
     form.append('defaultDeployRegion', deployConfigs.defaultDeployRegion);
     form.append('packageType', deployConfigs.packageType);
-    form.append('nodejsRuntime', deployConfigs.nodejsRuntime);
-    form.append('memorySizeMB', deployConfigs.memorySizeMB.toString());
 
     if (deployConfigs.injectedEnv) {
       form.append('injectedEnv', JSON.stringify(deployConfigs.injectedEnv));
     }
     if (deployConfigs.stdioArgsIndex) {
       form.append('stdioArgsIndex', deployConfigs.stdioArgsIndex);
+    }
+    if (deployConfigs.nodejsRuntime) {
+      form.append('nodejsRuntime', deployConfigs.nodejsRuntime);
+    }
+    if (deployConfigs.memorySizeMB) {
+      form.append('memorySizeMB', deployConfigs.memorySizeMB.toString());
     }
 
     const response = await fetch(apiUrl, {
