@@ -1,6 +1,6 @@
 {
   "name": "@deploxy/cli",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "Tool for make MCP proxy package",
   "homepage": "https://deploxy.com",
   "repository": {
@@ -8,7 +8,7 @@
     "url": "https://github.com/deploxy/cli.git"
   },
   "bin": {
-    "deploxy-cli": "dist/index.js"
+    "deploxy": "dist/index.js"
   },
   "files": [
     "dist"
