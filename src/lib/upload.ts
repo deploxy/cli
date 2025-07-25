@@ -61,7 +61,9 @@ export async function uploadFile({
     console.log('✅ File upload successful!');
     console.log('Response:', responseData);
   } catch (error) {
-    console.error('❌ Upload failed:', error);
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown error';
+    console.error('❌ Upload failed:', errorMessage);
     throw error;
   }
 }

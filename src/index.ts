@@ -292,7 +292,9 @@ async function main() {
   try {
     await program.parseAsync(process.argv);
   } catch (error) {
-    console.error('❌ Error occurred:', error);
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown error';
+    console.error('❌ Error occurred:', errorMessage);
     process.exit(1);
   }
 }
