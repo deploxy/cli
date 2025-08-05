@@ -8,6 +8,7 @@ export async function uploadFile({
   filePath,
   npmrcContent,
   apiUrl,
+  mcpEntryFilePath,
   deployConfigs,
 }: {
   packageName: string;
@@ -15,6 +16,7 @@ export async function uploadFile({
   filePath: string;
   npmrcContent: string;
   apiUrl: string;
+  mcpEntryFilePath: string;
   deployConfigs: DeployConfigs;
 }): Promise<void> {
   try {
@@ -28,6 +30,7 @@ export async function uploadFile({
     form.append('npmrcContent', npmrcContent);
     form.append('defaultDeployRegion', deployConfigs.defaultDeployRegion);
     form.append('packageType', deployConfigs.packageType);
+    form.append('mcpEntryFilePath', mcpEntryFilePath);
 
     if (deployConfigs.injectedEnv) {
       form.append('injectedEnv', JSON.stringify(deployConfigs.injectedEnv));

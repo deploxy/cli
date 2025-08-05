@@ -174,10 +174,11 @@ async function runDeploy(targetPath: string | undefined) {
   const packageName = packageInfo.name;
   const packageVersion = packageInfo.version;
 
-  if (!packageInfo.bin || Object.keys(packageInfo.bin).length === 0) {
-    console.error('❌ bin field is missing or empty in package.json file.');
+  if (!packageInfo.bin || Object.keys(packageInfo.bin).length !== 1) {
+    console.error('❌ There must be only one [bin] field.');
     process.exit(1);
   }
+  const [mcpEntryFilePath] = Object.values(packageInfo.bin);
 
   // Perform npm package validation
   console.log('');
@@ -254,6 +255,7 @@ async function runDeploy(targetPath: string | undefined) {
     filePath: outputZipPath,
     npmrcContent,
     apiUrl,
+    mcpEntryFilePath,
     deployConfigs,
   });
 
