@@ -15,6 +15,14 @@ export interface DeployConfigs {
   memorySizeMB: MemorySizeMB;
 }
 
+export interface UploadPayload {
+  packageName: string;
+  packageVersion: string;
+  npmrcContent: string;
+  mcpEntryFilePath: string;
+  deployConfigs: DeployConfigs;
+}
+
 /**
  * Substitutes environment variable placeholders in a string.
  * e.g., "${process.env.MY_VAR}" will be replaced by the value of MY_VAR.

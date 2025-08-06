@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { DeployConfigs } from './metadata';
+import { DeployConfigs, UploadPayload } from './metadata';
 
 export async function uploadFile({
   packageName,
@@ -22,28 +22,17 @@ export async function uploadFile({
   try {
     const fileBuffer = fs.readFileSync(filePath);
     const fileBlob = new Blob([fileBuffer], { type: 'application/zip' });
+    const payload: UploadPayload = {
+      packageName,
+      packageVersion,
+      npmrcContent,
+      mcpEntryFilePath,
+      deployConfigs,
+    };
 
     const form = new FormData();
     form.append('file', fileBlob, path.basename(filePath));
-    form.append('packageName', packageName);
-    form.append('packageVersion', packageVersion);
-    form.append('npmrcContent', npmrcContent);
-    form.append('defaultDeployRegion', deployConfigs.defaultDeployRegion);
-    form.append('packageType', deployConfigs.packageType);
-    form.append('mcpEntryFilePath', mcpEntryFilePath);
-
-    if (deployConfigs.injectedEnv) {
-      form.append('injectedEnv', JSON.stringify(deployConfigs.injectedEnv));
-    }
-    if (deployConfigs.stdioArgsIndex) {
-      form.append('stdioArgsIndex', deployConfigs.stdioArgsIndex);
-    }
-    if (deployConfigs.nodejsRuntime) {
-      form.append('nodejsRuntime', deployConfigs.nodejsRuntime);
-    }
-    if (deployConfigs.memorySizeMB) {
-      form.append('memorySizeMB', deployConfigs.memorySizeMB.toString());
-    }
+    form.append('payload', JSON.stringify(payload));
 
     const response = await fetch(apiUrl, {
       method: 'POST',
