@@ -5,6 +5,11 @@ export type NodejsRuntime = (typeof NODEJS_RUNTIMES)[number]['value'];
 
 export type MemorySizeMB = (typeof MEMORY_SIZES_MB)[number]['value'];
 
+export interface PackageManagerConfigs {
+  manager: 'npm' | 'yarn' | 'pnpm';
+  installCommand: string;
+}
+
 export interface DeployConfigs {
   authToken: string;
   defaultDeployRegion: string;
@@ -13,6 +18,7 @@ export interface DeployConfigs {
   packageType: 'js' | 'python';
   nodejsRuntime: NodejsRuntime;
   memorySizeMB: MemorySizeMB;
+  packageManager?: PackageManagerConfigs;
 }
 
 export interface UploadPayload {
