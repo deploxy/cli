@@ -1,25 +1,47 @@
 import * as fs from 'fs';
-import { MEMORY_SIZES_MB, NODEJS_RUNTIMES } from './constant.js';
+import {
+  MEMORY_SIZES_MB,
+  NODEJS_RUNTIMES,
+  PYTHON_RUNTIMES,
+} from './constant.js';
 
 export type NodejsRuntime = (typeof NODEJS_RUNTIMES)[number]['value'];
 
+export type PythonRuntime = (typeof PYTHON_RUNTIMES)[number]['value'];
+
 export type MemorySizeMB = (typeof MEMORY_SIZES_MB)[number]['value'];
 
-export interface PackageManagerConfigs {
+export interface JsPackageManagerConfigs {
   manager: 'npm' | 'yarn' | 'pnpm';
   installCommand: string;
 }
 
-export interface DeployConfigs {
+export interface PyPackageManagerConfigs {
+  manager: 'pip' | 'uv';
+  installCommand: string;
+}
+
+interface DeployConfigsBase {
   authToken: string;
   defaultDeployRegion: string;
   stdioArgsIndex: string | undefined;
   injectedEnv: Record<string, any> | undefined;
-  packageType: 'js' | 'python';
-  nodejsRuntime: NodejsRuntime;
   memorySizeMB: MemorySizeMB;
-  packageManager?: PackageManagerConfigs;
 }
+
+export interface JsDeployConfigs extends DeployConfigsBase {
+  packageType: 'js';
+  runtime: NodejsRuntime;
+  packageManager?: JsPackageManagerConfigs;
+}
+
+export interface PyDeployConfigs extends DeployConfigsBase {
+  packageType: 'py';
+  runtime: PythonRuntime;
+  packageManager?: PyPackageManagerConfigs;
+}
+
+export type DeployConfigs = JsDeployConfigs | PyDeployConfigs;
 
 export interface UploadPayload {
   packageName: string;
@@ -39,7 +61,7 @@ function substituteEnvVars(content: string): string {
   // This regex finds placeholders like ${process.env.VAR_NAME}
   const regex = /\$\{\s*process\.env\.([a-zA-Z_][a-zA-Z0-9_]*)\s*\}/g;
 
-  return content.replace(regex, (match, varName) => {
+  return content.replace(regex, (_, varName) => {
     const envVar = process.env[varName];
 
     if (envVar === undefined) {

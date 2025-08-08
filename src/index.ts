@@ -3,20 +3,24 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { Command } from 'commander';
-import { createZip } from './lib/zip.js';
+import { createZip, createPythonZip } from './lib/zip.js';
 import {
   getFilesToInclude,
   parseDeployConfigs,
   parsePackageJson,
+  JsDeployConfigs,
+  PyDeployConfigs,
 } from './lib/metadata.js';
 import {
   CONFIG_FILE_NAME,
   MEMORY_SIZES_MB,
   NODEJS_RUNTIMES,
+  PYTHON_RUNTIMES,
   UPLOAD_API_URL,
 } from './lib/constant.js';
 import { uploadFile } from './lib/upload.js';
 import { getNpmCredentials, validatePackage } from './lib/npm.js';
+import { getPythonPackageInfo, validatePythonPackage } from './lib/python.js';
 
 function getResolvedPath(targetPath: string | undefined): string {
   const resolvedPath = path.resolve(targetPath || '.');
@@ -53,6 +57,7 @@ async function runInit(targetPath: string | undefined) {
     packageType: 'js',
     injectedEnv: {},
     nodejsRuntime: NODEJS_RUNTIMES[0].value,
+    pythonRuntime: PYTHON_RUNTIMES[0].value,
     memorySizeMB: MEMORY_SIZES_MB[0].value,
   };
 
@@ -87,7 +92,16 @@ async function runInit(targetPath: string | undefined) {
     '*  IMPORTANT: Please create a .npmrc file with your npm auth     *',
   );
   console.log(
-    '*  token for package publishing.                                 *',
+    '*  token for package publishing (required for both JS & Python).*',
+  );
+  console.log(
+    '*                                                                *',
+  );
+  console.log(
+    '*  For JavaScript projects: Ensure package.json has bin field   *',
+  );
+  console.log(
+    '*  For Python projects: Run `uv build` to generate wheel files  *',
   );
   console.log(
     '*                                                                *',
@@ -133,32 +147,71 @@ async function runDeploy(targetPath: string | undefined) {
     process.exit(1);
   }
 
-  if (deployConfigs.memorySizeMB) {
+  // Type assertion to help TypeScript understand the type
+  const validatedConfigs = deployConfigs!;
+
+  if (validatedConfigs.memorySizeMB) {
     if (
-      !MEMORY_SIZES_MB.some((mem) => mem.value === deployConfigs.memorySizeMB)
+      !MEMORY_SIZES_MB.some(
+        (mem) => mem.value === validatedConfigs.memorySizeMB,
+      )
     ) {
       console.error(
-        `❌ Invalid memory size: ${deployConfigs.memorySizeMB}. Please use one of the following: ${MEMORY_SIZES_MB.map((mem) => mem.value).join(', ')}`,
+        `❌ Invalid memory size: ${validatedConfigs.memorySizeMB}. Please use one of the following: ${MEMORY_SIZES_MB.map((mem) => mem.value).join(', ')}`,
       );
       process.exit(1);
     }
   }
 
-  if (deployConfigs.nodejsRuntime) {
-    if (
-      !NODEJS_RUNTIMES.some(
-        (runtime) => runtime.value === deployConfigs.nodejsRuntime,
-      )
-    ) {
-      console.error(
-        `❌ Invalid Node.js runtime: ${deployConfigs.nodejsRuntime}. Please use one of the following: ${NODEJS_RUNTIMES.map((runtime) => runtime.value).join(', ')}`,
-      );
-      process.exit(1);
+  // Validate runtime based on package type
+  if (validatedConfigs.packageType === 'js') {
+    if (validatedConfigs.runtime) {
+      if (
+        !NODEJS_RUNTIMES.some(
+          (runtime) => runtime.value === validatedConfigs.runtime,
+        )
+      ) {
+        console.error(
+          `❌ Invalid Node.js runtime: ${validatedConfigs.runtime}. Please use one of the following: ${NODEJS_RUNTIMES.map((runtime) => runtime.value).join(', ')}`,
+        );
+        process.exit(1);
+      }
     }
+  } else if (validatedConfigs.packageType === 'py') {
+    if (validatedConfigs.runtime) {
+      if (
+        !PYTHON_RUNTIMES.some(
+          (runtime) => runtime.value === validatedConfigs.runtime,
+        )
+      ) {
+        console.error(
+          `❌ Invalid Python runtime: ${validatedConfigs.runtime}. Please use one of the following: ${PYTHON_RUNTIMES.map((runtime) => runtime.value).join(', ')}`,
+        );
+        process.exit(1);
+      }
+    }
+  } else {
+    console.error(
+      `❌ Invalid package type: ${(validatedConfigs as any).packageType}. Please use 'js' or 'py'.`,
+    );
+    process.exit(1);
   }
 
   console.log(`✅ ${CONFIG_FILE_NAME} file parsed successfully`);
 
+  if (validatedConfigs.packageType === 'js') {
+    await deployJsPackage(currentDir, validatedConfigs as JsDeployConfigs);
+  } else if (validatedConfigs.packageType === 'py') {
+    await deployPythonPackage(currentDir, validatedConfigs as PyDeployConfigs);
+  }
+
+  console.log('🎉 All tasks completed successfully!');
+}
+
+async function deployJsPackage(
+  currentDir: string,
+  deployConfigs: JsDeployConfigs,
+) {
   // 2. Find package.json
   const packageJsonPath = path.join(currentDir, 'package.json');
   if (!fs.existsSync(packageJsonPath)) {
@@ -264,8 +317,106 @@ async function runDeploy(targetPath: string | undefined) {
     fs.unlinkSync(outputZipPath);
     console.log('🧹 Temporary file cleanup completed');
   }
+}
 
-  console.log('🎉 All tasks completed successfully!');
+async function deployPythonPackage(
+  currentDir: string,
+  deployConfigs: PyDeployConfigs,
+) {
+  // 2. Find pyproject.toml and get Python package info
+  const pythonPackageInfo = getPythonPackageInfo(currentDir);
+  if (!pythonPackageInfo) {
+    console.error(
+      '❌ Failed to get Python package information. Please ensure pyproject.toml exists and dist/ contains wheel files.',
+    );
+    process.exit(1);
+  }
+
+  const {
+    name: packageName,
+    version: packageVersion,
+    wheelFiles,
+  } = pythonPackageInfo;
+  console.log(`✅ Python package info: ${packageName}@${packageVersion}`);
+  console.log(`📦 Found wheel files: ${wheelFiles.join(', ')}`);
+
+  // For Python packages, we still need NPM token for authentication
+  console.log('');
+  console.log('='.repeat(50));
+  console.log('📦 Python Package Validation');
+  console.log('='.repeat(50));
+
+  const npmCredentials = await getNpmCredentials(currentDir);
+  if (!npmCredentials) {
+    console.error(
+      '❌ NPM token not found. Please create a .npmrc file or set NPM_TOKEN environment variable.',
+    );
+    process.exit(1);
+  }
+  const { token: npmToken, content: npmrcContent } = npmCredentials;
+
+  const validationResult = await validatePythonPackage(
+    packageName,
+    packageVersion,
+    npmToken,
+  );
+
+  console.log('');
+  console.log('📋 Validation Results:');
+  console.log(
+    `  - Package exists: ${validationResult.packageExists ? 'Yes' : 'No'}`,
+  );
+  console.log(`  - ${validationResult.versionCheck.message}`);
+
+  if (validationResult.ownershipCheck) {
+    console.log(`  - ${validationResult.ownershipCheck.message}`);
+  }
+
+  if (!validationResult.canPublish) {
+    console.log('');
+    console.error(
+      '❌ Cannot publish package. Please check the validation results above.',
+    );
+    process.exit(1);
+  }
+
+  console.log('');
+  console.log('✅ Package validation completed! Proceeding with deployment.');
+  console.log('='.repeat(50));
+
+  // 3. Compress wheel files to output.zip
+  const outputZipPath = path.join(currentDir, 'output.zip');
+
+  // Delete existing output.zip file if it exists
+  if (fs.existsSync(outputZipPath)) {
+    fs.unlinkSync(outputZipPath);
+  }
+
+  console.log('📦 Starting Python package compression...');
+  await createPythonZip(currentDir, outputZipPath, wheelFiles);
+
+  // 4. Upload compressed file
+  const apiUrl = UPLOAD_API_URL;
+  console.log('📤 Starting file upload...');
+
+  // For Python packages, we use the first wheel file name as mcpEntryFilePath
+  const mcpEntryFilePath = wheelFiles[0];
+
+  await uploadFile({
+    packageName,
+    packageVersion,
+    filePath: outputZipPath,
+    npmrcContent,
+    apiUrl,
+    mcpEntryFilePath,
+    deployConfigs,
+  });
+
+  // 5. Clean up temporary files
+  if (fs.existsSync(outputZipPath)) {
+    fs.unlinkSync(outputZipPath);
+    console.log('🧹 Temporary file cleanup completed');
+  }
 }
 
 async function main() {

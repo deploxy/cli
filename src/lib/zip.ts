@@ -54,3 +54,44 @@ export function createZip(
     }
   });
 }
+
+/**
+ * Create zip file for Python wheel packages
+ * Creates output.zip containing dist/{PKG_NAME}.whl structure
+ */
+export function createPythonZip(
+  projectDir: string,
+  outputPath: string,
+  wheelFiles: string[],
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    try {
+      const zip = new AdmZip();
+      const distDir = path.join(projectDir, 'dist');
+
+      // Add each wheel file to the zip maintaining the dist/ structure
+      for (const wheelFile of wheelFiles) {
+        const wheelPath = path.join(distDir, wheelFile);
+        
+        if (fs.existsSync(wheelPath)) {
+          // Add file to zip with dist/ prefix to maintain structure
+          zip.addLocalFile(wheelPath, 'dist', wheelFile);
+          console.log(`📦 Added to zip: dist/${wheelFile}`);
+        } else {
+          throw new Error(`Wheel file not found: ${wheelPath}`);
+        }
+      }
+
+      // Save the zip file
+      zip.writeZip(outputPath);
+
+      const stats = fs.statSync(outputPath);
+      console.log(`📦 Python package compression completed: ${stats.size} bytes`);
+      console.log(`📦 Zip contains: ${wheelFiles.map(f => `dist/${f}`).join(', ')}`);
+      
+      resolve();
+    } catch (err) {
+      reject(err);
+    }
+  });
+}

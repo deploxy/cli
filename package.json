@@ -21,7 +21,8 @@
   "dependencies": {
     "adm-zip": "^0.5.16",
     "commander": "^14.0.0",
-    "minimatch": "^10.0.3"
+    "minimatch": "^10.0.3",
+    "smol-toml": "^1.4.1"
   },
   "devDependencies": {
     "@types/adm-zip": "^0.5.7",

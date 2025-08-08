@@ -17,6 +17,9 @@ importers:
       minimatch:
         specifier: ^10.0.3
         version: 10.0.3
+      smol-toml:
+        specifier: ^1.4.1
+        version: 1.4.1
     devDependencies:
       '@types/adm-zip':
         specifier: ^0.5.7
@@ -70,6 +73,10 @@ packages:
     engines: {node: '>=14'}
     hasBin: true
 
+  smol-toml@1.4.1:
+    resolution: {integrity: sha512-CxdwHXyYTONGHThDbq5XdwbFsuY4wlClRGejfE2NtwUtiHYsP1QtNsHb/hnj31jKYSchztJsaA8pSQoVzkfCFg==}
+    engines: {node: '>= 18'}
+
   typescript@5.8.3:
     resolution: {integrity: sha512-p1diW6TqL9L07nNxvRMM7hMMw4c5XOo/1ibL4aAIGmSAt9slTE1Xgw5KWuof2uTOvCg9BY7ZRi+GaF+7sfgPeQ==}
     engines: {node: '>=14.17'}
@@ -105,6 +112,8 @@ snapshots:
       '@isaacs/brace-expansion': 5.0.0
 
   prettier@3.5.3: {}
+
+  smol-toml@1.4.1: {}
 
   typescript@5.8.3: {}
 

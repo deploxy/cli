@@ -15,6 +15,19 @@ export const NODEJS_RUNTIMES = [
   },
 ] as const;
 
+export const PYTHON_RUNTIMES = [
+  {
+    value: 'python3.11',
+    label: 'Python 3.11',
+    description: 'python3.11',
+  },
+  {
+    value: 'python3.12',
+    label: 'Python 3.12',
+    description: 'python3.12',
+  },
+] as const;
+
 export const MEMORY_SIZES_MB = [
   {
     value: 256,
