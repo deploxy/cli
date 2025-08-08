@@ -336,9 +336,23 @@ async function deployPythonPackage(
     name: packageName,
     version: packageVersion,
     wheelFiles,
+    scripts,
   } = pythonPackageInfo;
   console.log(`✅ Python package info: ${packageName}@${packageVersion}`);
   console.log(`📦 Found wheel files: ${wheelFiles.join(', ')}`);
+
+  // Get the first script from [project.scripts] for mcpEntryFilePath
+  let mcpEntryFilePath: string;
+  if (scripts && Object.keys(scripts).length > 0) {
+    const firstScriptName = Object.keys(scripts)[0];
+    mcpEntryFilePath = firstScriptName;
+    console.log(`✅ Using script entry: ${firstScriptName}`);
+  } else {
+    console.error(
+      '❌ No scripts found in pyproject.toml [project.scripts]. Please define at least one script entry.',
+    );
+    process.exit(1);
+  }
 
   // For Python packages, we still need NPM token for authentication
   console.log('');
@@ -398,9 +412,6 @@ async function deployPythonPackage(
   // 4. Upload compressed file
   const apiUrl = UPLOAD_API_URL;
   console.log('📤 Starting file upload...');
-
-  // For Python packages, we use the first wheel file name as mcpEntryFilePath
-  const mcpEntryFilePath = wheelFiles[0];
 
   await uploadFile({
     packageName,

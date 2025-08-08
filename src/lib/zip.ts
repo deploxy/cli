@@ -57,7 +57,7 @@ export function createZip(
 
 /**
  * Create zip file for Python wheel packages
- * Creates output.zip containing dist/{PKG_NAME}.whl structure
+ * Creates output.zip containing dist/ directory and pyproject.toml
  */
 export function createPythonZip(
   projectDir: string,
@@ -68,18 +68,22 @@ export function createPythonZip(
     try {
       const zip = new AdmZip();
       const distDir = path.join(projectDir, 'dist');
+      const pyprojectPath = path.join(projectDir, 'pyproject.toml');
 
-      // Add each wheel file to the zip maintaining the dist/ structure
-      for (const wheelFile of wheelFiles) {
-        const wheelPath = path.join(distDir, wheelFile);
-        
-        if (fs.existsSync(wheelPath)) {
-          // Add file to zip with dist/ prefix to maintain structure
-          zip.addLocalFile(wheelPath, 'dist', wheelFile);
-          console.log(`📦 Added to zip: dist/${wheelFile}`);
-        } else {
-          throw new Error(`Wheel file not found: ${wheelPath}`);
-        }
+      // Add pyproject.toml file
+      if (fs.existsSync(pyprojectPath)) {
+        zip.addLocalFile(pyprojectPath, '', 'pyproject.toml');
+        console.log(`📦 Added to zip: pyproject.toml`);
+      } else {
+        throw new Error(`pyproject.toml not found: ${pyprojectPath}`);
+      }
+
+      // Add entire dist directory
+      if (fs.existsSync(distDir)) {
+        zip.addLocalFolder(distDir, 'dist');
+        console.log(`📦 Added to zip: dist/ directory`);
+      } else {
+        throw new Error(`dist/ directory not found: ${distDir}`);
       }
 
       // Save the zip file
@@ -87,7 +91,7 @@ export function createPythonZip(
 
       const stats = fs.statSync(outputPath);
       console.log(`📦 Python package compression completed: ${stats.size} bytes`);
-      console.log(`📦 Zip contains: ${wheelFiles.map(f => `dist/${f}`).join(', ')}`);
+      console.log(`📦 Zip contains: pyproject.toml, dist/ directory with ${wheelFiles.length} wheel file(s)`);
       
       resolve();
     } catch (err) {

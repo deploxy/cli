@@ -9,12 +9,14 @@ export interface PyProjectInfo {
   description?: string;
   dependencies?: string[];
   'dev-dependencies'?: string[];
+  scripts?: Record<string, string>;
 }
 
 export interface PythonPackageInfo {
   name: string;
   version: string;
   wheelFiles: string[];
+  scripts?: Record<string, string>;
 }
 
 interface TomlProjectSection {
@@ -30,6 +32,7 @@ interface TomlProjectSection {
   repository?: string | { type: string; url: string };
   keywords?: string[];
   classifiers?: string[];
+  scripts?: Record<string, string>;
 }
 
 /**
@@ -94,6 +97,7 @@ export function parsePyProjectToml(
           ? project['dev-dependencies'].map(String)
           : undefined
         : undefined,
+      scripts: project.scripts || undefined,
     };
   } catch (error) {
     console.error('❌ Error parsing pyproject.toml:', error);
@@ -143,6 +147,7 @@ export function getPythonPackageInfo(
     name: projectInfo.name,
     version: projectInfo.version,
     wheelFiles,
+    scripts: projectInfo.scripts,
   };
 }
 
